@@ -1,9 +1,10 @@
 # Implementación de Zone-Based Policy Firewall (ZPF) en Cisco IOS
+Laboratorio guiado del curso de Cisco Networking Academy; la topología y la consigna son del curso, la configuración y la verificación las realicé yo.
 
 ## Descripción General
 Este proyecto documenta la implementación de un **Zone-Based Policy Firewall (ZPF)** en el router de borde **R3** utilizando Cisco Packet Tracer. El objetivo principal es establecer un perímetro de seguridad inspeccionado por estado (*stateful inspection*) que permita a los hosts de la red interna privada acceder de forma segura a servicios en la red externa (HTTP, SSH, ICMP), bloqueando simultáneamente todo intento de conexión no solicitada iniciado desde la red externa hacia la infraestructura privada.
 
-Esta configuración simula un escenario real de endurecimiento de perímetro (*perimeter hardening*) esencial para funciones de análisis SOC Nivel 1, administración de red e ingeniería de ciberseguridad.
+Esta configuración simula un escenario real de endurecimiento de perímetro (*perimeter hardening*) relacionado con funciones de SOC L1 y administración de red.
 
 ---
 
@@ -13,7 +14,7 @@ Esta configuración simula un escenario real de endurecimiento de perímetro (*p
 * Clasificar el tráfico de la red privada mediante **Access Control Lists (ACL)** y **Class Maps**.
 * Diseñar políticas de inspección de estado con **Policy Maps** y vincularlas a un **Zone Pair** direccional.
 * Asignar interfaces físicas a sus respectivas zonas de seguridad para activar la política.
-* Validar la seguridad del firewall mediante pruebas de penetración no solicitadas y auditoría de la tabla de estado (*State Table*).
+* Validar la seguridad del firewall mediante pruebas de conectividad no solicitadas desde la zona externa.
 
 ---
 
@@ -21,7 +22,7 @@ Esta configuración simula un escenario real de endurecimiento de perímetro (*p
 * **Plataforma de Simulación:** Cisco Packet Tracer.
 * **Sistema Operativo:** Cisco IOS Software.
 * **Conceptos de Ciberseguridad:** Zone-Based Policy Firewall (ZPF), Stateful Packet Inspection (SPI), Permiso Implícito por Zona, Denegación Implícita (*Implicit Deny*).
-* **Protocolos e Interfaces:** TCP, UDP, ICMP, HTTP (Puerto 80), SSH (Puerto 22), Access Control Lists (ACL 101 estándar/extendida).
+* **Protocolos e Interfaces:** TCP, UDP, ICMP, HTTP (Puerto 80), SSH (Puerto 22), Access Control ACL extendida 101.
 
 ---
 
@@ -61,7 +62,7 @@ Antes de aplicar la política de firewall, se verificó el enrutamiento completo
 
 ## Fase 2: Configuración del Zone-Based Policy Firewall (ZPF)
 
-La configuración se realizó en el router **R3** siguiendo la metodología de arquitectura CMM (Class-Based Policy Language).
+La configuración se realizó en el router **R3** usando C3PL (Cisco Common Classification Policy Language).
 
 ### Paso 1: Creación de Zonas de Seguridad
 Se definieron las zonas de confianza para delimitar el perímetro.
@@ -173,4 +174,4 @@ Zone-pair: IN-2-OUT-ZONE-PAIR
 ---
 
 ## Conclusión
-La implementación exitosa del Zone-Based Policy Firewall en el router R3 garantiza la confidencialidad e integridad de la red privada interna. Mediante el uso de inspección de estado, la LAN puede operar normalmente hacia servicios externos mientras permanece invisible e inalcanzable ante intentos de intrusión iniciados desde redes públicas no confiables.
+En el entorno simulado, el tráfico iniciado en IN-ZONE fue permitido y el no solicitado desde OUT-ZONE fue bloqueado, como muestran las sesiones auditadas.
