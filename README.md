@@ -22,7 +22,7 @@ Esta configuración simula un escenario real de endurecimiento de perímetro (*p
 * **Plataforma de Simulación:** Cisco Packet Tracer.
 * **Sistema Operativo:** Cisco IOS Software.
 * **Conceptos de Ciberseguridad:** Zone-Based Policy Firewall (ZPF), Stateful Packet Inspection (SPI), Permiso Implícito por Zona, Denegación Implícita (*Implicit Deny*).
-* **Protocolos e Interfaces:** TCP, UDP, ICMP, HTTP (Puerto 80), SSH (Puerto 22), Access Control ACL extendida 101.
+* **Protocolos e Interfaces:** TCP, UDP, ICMP, HTTP (Puerto 80), SSH (Puerto 22), Access Control Lists (ACL extendida 101).
 
 ---
 
@@ -67,10 +67,12 @@ La configuración se realizó en el router **R3** usando C3PL (Cisco Common Clas
 ### Paso 1: Creación de Zonas de Seguridad
 Se definieron las zonas de confianza para delimitar el perímetro.
 
+```text
 R3(config)# zone security IN-ZONE
 R3(config-sec-zone)# exit
 R3(config)# zone security OUT-ZONE
 R3(config-sec-zone)# exit
+```
 
 ![Creación de Zonas](images/04-creacion-zonas-seguridad.png)
 
@@ -81,10 +83,12 @@ R3(config-sec-zone)# exit
 ### Paso 2: Clasificación del Tráfico (ACL y Class Map)
 Se configuró una ACL para identificar todo el tráfico originado en la red LAN privada y se acopló a un mapa de clases de tipo inspección.
 
+```text
 R3(config)# access-list 101 permit ip 192.168.3.0 0.0.0.255 any
 R3(config)# class-map type inspect match-all IN-NET-CLASS-MAP
 R3(config-cmap)# match access-group 101
 R3(config-cmap)# exit
+```
 
 ![Configuración Class Map y ACL](images/05-configuracion-classmap-acl.png)
 
@@ -95,17 +99,21 @@ R3(config-cmap)# exit
 ### Paso 3: Definición de Política y Par de Zonas (Policy Map & Zone Pair)
 Se asignó la acción `inspect` a la clase definida y se creó la relación direccional desde `IN-ZONE` hacia `OUT-ZONE`.
 
+```text
 R3(config)# policy-map type inspect IN-2-OUT-POLICY
 R3(config-pmap)# class type inspect IN-NET-CLASS-MAP
 R3(config-pmap-c)# inspect
 R3(config-pmap-c)# exit
 R3(config-pmap)# exit
+```
 
-R3(config)# zone-pair security IN-2-OUT-ZONE-PAIR 
+```text
+R3(config)# zone-pair security IN-2-OUT-ZONE-PAIR
             source IN-ZONE destination OUT-ZONE
-R3(config-sec-zone-pair)# service-policy type inspect 
+R3(config-sec-zone-pair)# service-policy type inspect
                           IN-2-OUT-POLICY
 R3(config-sec-zone-pair)# exit
+```
 
 ![Policy Map y Zone Pair](images/06-policy-map-zone-pair.png)
 
@@ -116,6 +124,7 @@ R3(config-sec-zone-pair)# exit
 ### Paso 4: Asignación de Interfaces Físicas a las Zonas
 Se vincularon las interfaces físicas del router R3 a sus contenedores lógicos correspondientes para aplicar la política.
 
+```text
 R3(config)# interface GigabitEthernet0/1
 R3(config-if)# zone-member security IN-ZONE
 R3(config-if)# exit
@@ -123,6 +132,7 @@ R3(config-if)# exit
 R3(config)# interface Serial0/0/1
 R3(config-if)# zone-member security OUT-ZONE
 R3(config-if)# exit
+```
 
 ![Asignación de Interfaces](images/07-asignacion-interfaces-zonas.png)
 
@@ -144,9 +154,12 @@ Para confirmar la eficacia del firewall, se ejecutaron pruebas cruzadas de tráf
 | **R2 (Externa)** | PC-C (`192.168.3.3`) | ICMP (Ping) | **BLOQUEADO** | El router R2 intenta iniciar una conexión directa a la LAN interna. Es rechazado por falta de regla de entrada. |
 
 ### Comando de Verificación de Sesiones en R3:
+```text
 R3# show policy-map type inspect zone-pair sessions
+```
 
 **Salida de la auditoría:**
+```text
 policy exists on zp IN-2-OUT-ZONE-PAIR
 Zone-pair: IN-2-OUT-ZONE-PAIR
   Service-policy inspect : IN-2-OUT-POLICY
@@ -156,13 +169,14 @@ Zone-pair: IN-2-OUT-ZONE-PAIR
         Number of Established Sessions = 1
         Established Sessions
           Session 2044577936 (192.168.3.3:1031)=>(10.2.2.2:22) tcp SIS_OPEN/TCP_ESTAB
+```
 
 ---
 
 ## Conceptos Aprendidos & Relevancia SOC Nivel 1
 * **Diferencia entre ACL Tradicional y ZPF:** Mientras que las ACLs estáticas operan filtrando paquetes de forma independiente sin recordar el contexto (Stateless), ZPF evalúa el contexto de la sesión completa de Capa 4 a Capa 7 (Stateful).
 * **Defensa en Profundidad:** ZPF simplifica la administración de seguridad en redes complejas reduciendo la probabilidad de brechas causadas por malas configuraciones de ACLs.
-* **Monitoreo e Investigación de Sesiones:** Capacidad para auditar las tablas de conexiones vivas (`SIS_OPEN`, `TCP_ESTAB`) para identificar posibles balizamientos (*beaconing*) o conexiones sospechosas iniciadas desde hosts comprometidos dentro de la red.
+* **Monitoreo e Investigación de Sesiones:** La tabla de sesiones vivas (`SIS_OPEN`, `TCP_ESTAB`) permite revisar conexiones salientes y, en un entorno real, detectar conexiones sospechosas o balizamiento (*beaconing*) desde hosts internos.
 
 ---
 
